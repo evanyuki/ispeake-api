@@ -1,0 +1,35 @@
+# FastAPI核心
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# 数据库
+motor==3.3.2                    # 异步MongoDB驱动
+pymongo==4.6.1
+
+# 数据验证
+pydantic==2.5.0
+pydantic-settings==2.1.0
+email-validator==2.1.0
+
+# 认证和安全
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# HTTP客户端
+httpx==0.25.2
+
+# 通知推送
+# pushoo==0.0.10  # 需要手动安装或替代方案
+
+# 工具
+python-dotenv==1.0.0
+
+# 可选：性能优化
+orjson==3.9.10                  # 更快的JSON序列化
+
+# 可选：Redis缓存
+# redis==5.0.1
+# aioredis==2.0.1
+
