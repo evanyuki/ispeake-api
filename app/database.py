@@ -17,14 +17,23 @@ async def connect_to_mongo():
     global _client, _db
     
     if _client is None:
-        _client = AsyncIOMotorClient(
-            settings.DATABASE_URL,
-            maxPoolSize=settings.MONGO_MAX_POOL_SIZE,
-            minPoolSize=settings.MONGO_MIN_POOL_SIZE,
-            serverSelectionTimeoutMS=settings.MONGO_SERVER_SELECTION_TIMEOUT_MS,
-        )
-        _db = _client[settings.DATABASE_NAME]
-        print(f"✅ 已连接到MongoDB: {settings.DATABASE_NAME}")
+        try:
+            _client = AsyncIOMotorClient(
+                settings.DATABASE_URL,
+                maxPoolSize=settings.MONGO_MAX_POOL_SIZE,
+                minPoolSize=settings.MONGO_MIN_POOL_SIZE,
+                serverSelectionTimeoutMS=settings.MONGO_SERVER_SELECTION_TIMEOUT_MS,
+            )
+            _db = _client[settings.DATABASE_NAME]
+            
+            # 测试连接
+            await _client.admin.command('ping')
+            print(f"✅ 已连接到MongoDB: {settings.DATABASE_NAME}")
+        except Exception as e:
+            print(f"❌ MongoDB连接失败: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
 
 
 async def close_mongo_connection():
@@ -40,9 +49,18 @@ def get_database():
     获取数据库实例
     用于依赖注入
     """
+    global _db
+    
     if _db is None:
+        print("❌ 数据库未初始化")
         raise Exception("数据库未初始化，请先调用 connect_to_mongo()")
-    return _db
+    
+    # 在 Serverless 环境中，检查连接是否仍然有效
+    try:
+        return _db
+    except Exception as e:
+        print(f"❌ 获取数据库连接失败: {type(e).__name__}: {e}")
+        raise
 
 
 # 集合名称常量

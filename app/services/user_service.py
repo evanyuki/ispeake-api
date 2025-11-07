@@ -81,14 +81,21 @@ class UserService:
         Returns:
             用户信息，不存在返回None
         """
-        projection = None if include_password else {"password": 0}
-        
-        user = await db[Collections.USERS].find_one(query, projection)
-        
-        if user:
-            user["_id"] = str(user["_id"])
-        
-        return user
+        try:
+            projection = None if include_password else {"password": 0}
+            
+            user = await db[Collections.USERS].find_one(query, projection)
+            
+            if user:
+                user["_id"] = str(user["_id"])
+            
+            return user
+            
+        except Exception as e:
+            print(f"❌ 查询用户异常: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
     
     @staticmethod
     async def create_one(

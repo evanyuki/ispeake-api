@@ -29,21 +29,40 @@ class AuthService:
         Returns:
             验证成功返回用户信息（包含_id），失败返回None
         """
-        # 查询用户（需要密码字段）
-        user = await UserService.find_one(
-            db, 
-            {"userName": username}, 
-            include_password=True
-        )
-        
-        if not user:
+        try:
+            # 验证输入参数
+            if not username or not password:
+                print(f"❌ 登录验证失败: 用户名或密码为空")
+                return None
+            
+            print(f"🔍 正在验证用户: {username}")
+            
+            # 查询用户（需要密码字段）
+            user = await UserService.find_one(
+                db, 
+                {"userName": username}, 
+                include_password=True
+            )
+            
+            if not user:
+                print(f"❌ 用户不存在: {username}")
+                return None
+            
+            print(f"✅ 找到用户: {username}, 正在验证密码...")
+            
+            # 验证密码
+            if not verify_password(password, user.get("password", "")):
+                print(f"❌ 密码验证失败: {username}")
+                return None
+            
+            print(f"✅ 用户验证成功: {username}")
+            return user
+            
+        except Exception as e:
+            print(f"❌ 用户验证异常: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
             return None
-        
-        # 验证密码
-        if not verify_password(password, user["password"]):
-            return None
-        
-        return user
     
     @staticmethod
     def create_token(user: Dict[str, Any]) -> str:

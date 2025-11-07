@@ -15,6 +15,19 @@ from app.core.config import settings
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
+def _preprocess_password(password: str) -> str:
+    """
+    预处理密码，使用SHA256避免bcrypt的72字节限制
+    
+    Args:
+        password: 原始密码
+    
+    Returns:
+        SHA256哈希后的十六进制字符串
+    """
+    return hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+
 def hash_password(password: str) -> str:
     """
     加密密码
@@ -31,14 +44,36 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """旧格式验证（模拟 NestJS 的 bcrypt.compareSync）"""
+    """
+    验证密码（兼容NestJS的bcrypt格式）
+    
+    Args:
+        plain_password: 明文密码
+        hashed_password: bcrypt加密后的密码哈希
+    
+    Returns:
+        密码是否匹配
+    """
     try:
+        # 验证输入参数
+        if not plain_password or not hashed_password:
+            print(f"❌ 密码验证失败: 密码或哈希为空")
+            return False
+        
         # 直接使用 bcrypt.checkpw
         password_bytes = plain_password.encode('utf-8')
         hash_bytes = hashed_password.encode('utf-8')
-        return bcrypt.checkpw(password_bytes, hash_bytes)
+        result = bcrypt.checkpw(password_bytes, hash_bytes)
+        
+        return result
+    except UnicodeDecodeError as e:
+        print(f"❌ 密码验证失败 - 编码错误: {e}")
+        return False
+    except ValueError as e:
+        print(f"❌ 密码验证失败 - 值错误: {e}")
+        return False
     except Exception as e:
-        print(f"  旧格式验证异常: {e}")
+        print(f"❌ 密码验证失败 - 未知错误: {type(e).__name__}: {e}")
         return False
 
 

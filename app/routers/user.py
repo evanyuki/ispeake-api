@@ -73,25 +73,51 @@ async def login(
     用户登录（无需认证）
     返回JWT Token
     """
-    # 验证用户凭证
-    user = await AuthService.validate_user(db, credentials.username, credentials.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="用户名或密码错误"
+    try:
+        print(f"📝 收到登录请求: username={credentials.username}")
+        
+        # 验证数据库连接
+        if db is None:
+            print("❌ 数据库未初始化")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="数据库服务不可用"
+            )
+        
+        # 验证用户凭证
+        user = await AuthService.validate_user(db, credentials.username, credentials.password)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="用户名或密码错误"
+            )
+        
+        # 创建Token
+        token = AuthService.create_token(user)
+        
+        print(f"✅ 用户登录成功: {credentials.username}")
+        
+        return SuccessResponse.create(
+            data=UserLoginResponse(
+                token=token,
+                userId=str(user["_id"]),
+                userName=user["userName"]
+            ),
+            message="登录成功"
         )
-    
-    # 创建Token
-    token = AuthService.create_token(user)
-    
-    return SuccessResponse.create(
-        data=UserLoginResponse(
-            token=token,
-            userId=str(user["_id"]),
-            userName=user["userName"]
-        ),
-        message="登录成功"
-    )
+        
+    except HTTPException:
+        # 重新抛出HTTP异常
+        raise
+    except Exception as e:
+        # 捕获所有其他异常
+        print(f"❌ 登录处理异常: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"登录处理失败: {str(e)}"
+        )
 
 
 @router.get("/getUserInfo", response_model=SuccessResponse)
