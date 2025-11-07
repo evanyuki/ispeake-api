@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.core.security import verify_token
-from app.database import get_database
+from app.database import get_db_async
 
 # HTTP Bearer认证
 security = HTTPBearer()
@@ -64,8 +64,9 @@ async def get_current_user_optional(
 async def get_db():
     """
     获取数据库连接
+    支持惰性初始化，适配Serverless环境
     """
-    return get_database()
+    return await get_db_async()
 
 
 # 导出常用依赖

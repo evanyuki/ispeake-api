@@ -46,21 +46,40 @@ async def close_mongo_connection():
 
 def get_database():
     """
-    获取数据库实例
-    用于依赖注入
+    获取数据库实例（同步方法）
+    注意：在Serverless环境中，建议使用 get_db_async() 来确保正确初始化
     """
     global _db
     
     if _db is None:
-        print("❌ 数据库未初始化")
-        raise Exception("数据库未初始化，请先调用 connect_to_mongo()")
+        # 尝试快速初始化（不进行连接测试）
+        global _client
+        if _client is None:
+            _client = AsyncIOMotorClient(
+                settings.DATABASE_URL,
+                maxPoolSize=settings.MONGO_MAX_POOL_SIZE,
+                minPoolSize=settings.MONGO_MIN_POOL_SIZE,
+                serverSelectionTimeoutMS=settings.MONGO_SERVER_SELECTION_TIMEOUT_MS,
+            )
+            _db = _client[settings.DATABASE_NAME]
+            print(f"⚠️  数据库惰性初始化（同步）: {settings.DATABASE_NAME}")
     
-    # 在 Serverless 环境中，检查连接是否仍然有效
-    try:
-        return _db
-    except Exception as e:
-        print(f"❌ 获取数据库连接失败: {type(e).__name__}: {e}")
-        raise
+    return _db
+
+
+async def get_db_async():
+    """
+    获取数据库实例（异步方法，推荐用于依赖注入）
+    支持惰性初始化，适配Serverless环境
+    """
+    global _db
+    
+    # 如果数据库未初始化，自动初始化
+    if _db is None:
+        print("⚠️  数据库未初始化，正在进行惰性初始化...")
+        await connect_to_mongo()
+    
+    return _db
 
 
 # 集合名称常量
