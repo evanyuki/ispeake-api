@@ -10,10 +10,11 @@
     {
       "src": "/(.*)",
       "dest": "app/main.py"
-    }
+    },
+    { "src": "/docs", "dest": "app/main.py" },
+    { "src": "/openapi.json", "dest": "app/main.py" }
   ],
   "env": {
     "PYTHON_VERSION": "3.11"
   }
 }
-
