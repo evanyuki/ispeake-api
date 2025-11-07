@@ -57,5 +57,5 @@ async def health_check():
 
 
 # Vercel需要这个handler
-handler = app
+# handler = app
 
