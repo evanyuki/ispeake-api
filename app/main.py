@@ -4,28 +4,17 @@ FastAPI主入口文件
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
 
 from app.core.config import settings
-from app.database import close_mongo_connection, connect_to_mongo
 from app.routers import user, token, ispeak, ispeak_tag, post, openapi
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """应用生命周期管理"""
-    # 启动时
-    await connect_to_mongo()
-    yield
-    # 关闭时
-    await close_mongo_connection()
-
-
+# 在Serverless环境中，不使用lifespan钩子
+# 改用惰性初始化策略，让数据库连接在首次请求时自动建立
 app = FastAPI(
     title="KKAPI",
     description="KKAPI服务 - FastAPI版本",
     version="0.0.1",
-    lifespan=lifespan,
 )
 
 # CORS配置
